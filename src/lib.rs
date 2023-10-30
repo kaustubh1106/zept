@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract,contractimpl,contracttype,log,Env,Address};
+use soroban_sdk::{contract,contractimpl,contracttype,log,Env,Address,Symbol};
 
 #[contracttype]
 pub enum Owner{
@@ -8,6 +8,29 @@ pub enum Owner{
     Lvl2(Address),
     Lvl3(Address)
 }
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[repr(u32)]
+#[contracttype]
+pub enum Music{
+    Issuer,
+    Category,
+    TokenName,
+    Burnable,
+    BaseUri,
+    Timespan
+}
+
+pub fn get_status_lvl1(env:&Env, address:&Address) -> bool{
+        env.storage().persistent().get(&Owner::Lvl1(address.clone())).unwrap()
+    }
+
+pub fn get_status_lvl2(env: &Env, address: &Address) -> bool{
+        env.storage().persistent().get(&Owner::Lvl2(address.clone())).unwrap()
+    }
+
+pub fn get_status_lvl3(env: &Env, address: &Address) -> bool{
+        env.storage().persistent().get(&Owner::Lvl3(address.clone())).unwrap()
+    }
 #[contract]
 pub struct Contract;
 
@@ -40,7 +63,7 @@ impl Contract{
             log!(&env, "lvl1 not done");
         }
     }
-    
+
     pub fn lvl3(env: Env,address: Address) {
         let owner:Address = env.storage().persistent().get(&Owner::Owner).unwrap();
         owner.require_auth();
@@ -53,70 +76,20 @@ impl Contract{
             log!(&env, "below levels not done");
         }
     }
-
-    pub fn get_status_lvl1(env:Env, address:Address) -> bool{
-        env.storage().persistent().get(&Owner::Lvl1(address.clone())).unwrap()
-    }
-    pub fn get_status_lvl2(env:Env, address:Address) -> bool{
-        env.storage().persistent().get(&Owner::Lvl2(address.clone())).unwrap()
-    }
-
-    pub fn get_status_lvl3(env:Env, address:Address) -> bool{
-        env.storage().persistent().get(&Owner::Lvl3(address.clone())).unwrap()
-    }
-
-    pub fn create(env:Env, issuer: Address, category: &str, token_name: &str, burnable: bool, base_uri : String, timespan: ){
-        issuer.require_auth();
-        
-    }
-}
-    // #[action]
-// pub fn deletedelphi(delphi_pair_name: Name) {
-//     require_auth(&self);
-
-//     let mut config_table = s_configtoken(&self, &self.into());
-//     assert!(config_table.exists(), "Config table does not exist, setconfig first");
-
-//     let mut current_config = config_table.get();
-
-//     let pairs_supported = current_config.supported_symbol_pairs.clone();
-//     let mut new_pairs_supported = Vec::<SYMBOLPAIR>::new();
-
-//     for i in 0..pairs_supported.len() {
-//         if pairs_supported[i].delphi_pair_name == delphi_pair_name {
-//             continue;
-//         }
-//         new_pairs_supported.push(pairs_supported[i].clone());
-//     }
-
-//     current_config.supported_symbol_pairs = new_pairs_supported;
-
-//     config_table.set(&current_config, &self);
-// }
-
-
-// #[action]
-// pub fn setconfig(version: String, admin: Name) {
-//     require_auth(&self);
-
-//     let mut configs = s_configtoken(&self, &self.into());
-//     configs.set(&configtoken {
-//         name: "dnft".into(),
-//         version,
-//         supported_symbol_pairs: vec![],
-//         delphioracle_account: delphioracle::DELPHIORACLE_ACCOUNT.into(),
-//     }, &self);
-
-//     let mut state_table = s_stateinfo(&self, &self.into());
-//     state_table.set(&stateinfo {
-//         admin,
-//         value: 91,
-//     }, &self);
-
-// }
     
 
-
-
-
-
+    pub fn create(env:Env,issuer: Address,category:  Symbol, token_name: Address, burnable: bool, baseuri: Symbol,timespan: u64){
+        
+        owner.require_auth();
+        assert!(get_status_lvl1(&env, &issuer),"not verified at lvl1");        
+        assert!(get_status_lvl2(&env, &issuer),"not verified at lvl2");  
+        assert!(get_status_lvl3(&env, &issuer),"not verified at lvl3"); 
+        env.storage().persistent().set(&Music::Issuer,&issuer);
+        env.storage().persistent().set(&Music::Category,&category);
+        env.storage().persistent().set(&Music::TokenName,&token_name);
+        env.storage().persistent().set(&Music::Burnable,&burnable);
+        env.storage().persistent().set(&Music::BaseUri,&baseuri);
+        env.storage().persistent().set(&Music::Timespan,&timespan);
+    
+    }
+}

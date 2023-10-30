@@ -1,0 +1,70 @@
+
+#![no_std]
+use soroban_sdk::{contract,contractimpl,contracttype,log,Env,Address,Symbol};
+
+#[contracttype]
+pub enum Owner{
+    Owner,
+    Lvl1(Address),
+    Lvl2(Address)
+}
+#[contracttype]
+pub enum Music{
+    Issuer,
+    category,
+    tokenName,
+    burnable,
+    baseUri,
+    timespan
+}
+#[contract]
+pub struct Contract;
+
+
+#[contractimpl]
+impl Contract{
+    pub fn set(env: Env,address: Address) ->bool {
+        if !env.storage().persistent().has(&Owner::Owner) {
+            env.storage().persistent().set(&Owner::Owner,&address);
+            true
+        }
+        else {
+            false
+        }
+    }
+    
+    pub fn lvl1(env: Env,address: Address) {
+        let owner:Address = env.storage().persistent().get(&Owner::Owner).unwrap();
+        owner.require_auth();
+        env.storage().persistent().set(&Owner::Lvl1(address), &true);
+    }
+    pub fn lvl2(env: Env,address: Address) {
+        let owner:Address = env.storage().persistent().get(&Owner::Owner).unwrap();
+        owner.require_auth();
+        let a:bool = env.storage().persistent().get(&Owner::Lvl1(address.clone())).unwrap();
+        if a {
+            env.storage().persistent().set(&Owner::Lvl2(address), &true);
+        }
+        else{
+            log!(&env, "lvl1 not done");
+        }
+    }
+    
+    pub fn get_status_lvl1(env:&Env, address:&Address) -> bool{
+        env.storage().persistent().get(&Owner::Lvl1(address.clone())).unwrap()
+    }
+    pub fn get_status_lvl2(env:Env, address:Address) -> bool{
+        env.storage().persistent().get(&Owner::Lvl2(address.clone())).unwrap()
+    }
+
+    pub fn create(env:Env,issuer: Address,category:  Symbol, token_name: Address, burnable: bool, baseuri: Symbol,timespan: u64){
+        
+assert!(&Self::get_status_lvl1(&env, &issuer),"abc");         //there is some error here
+        env.storage().persistent().set(&Music::Issuer,&issuer);
+        env.storage().persistent().set(&Music::category,&category);
+        env.storage().persistent().set(&Music::tokenName,&token_name);
+        env.storage().persistent().set(&Music::burnable,&burnable);
+        env.storage().persistent().set(&Music::baseUri,&baseuri);
+        env.storage().persistent().set(&Music::timespan,&timespan);
+    }
+}
